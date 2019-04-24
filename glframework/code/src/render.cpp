@@ -512,11 +512,19 @@ void main() {\n\
 	vec3 norm = normalize(vert_Normal);\n\
 	vec3 lightDir = normalize(LightPos - frag_Pos);\n\
 	float diff = max(dot(norm, lightDir), 0.0);\n\
+	if(diff < 0.2) diff = 0;\n\
+	if(diff >= 0.2 && diff < 0.4) diff = 0.2;\n\
+	if(diff >= 0.4 && diff < 0.5) diff = 0.4;\n\
+	if(diff >= 0.5) diff = 1;\n\
 	vec3 diffuse = diff * lightColor;\n\
 	//specular\n\
 	vec3 viewDir = normalize(-frag_Pos);\n\
 	vec3 reflectDir = reflect(-lightDir, norm);\n\
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), ex);\n\
+	if(spec < 0.2) spec = 0;\n\
+	if(spec >= 0.2 && spec < 0.4) spec = 0.2;\n\
+	if(spec >= 0.4 && spec < 0.5) spec = 0.4;\n\
+	if(spec >= 0.5) spec = 1;\n\
 	vec3 specular = specularStrength * spec * lightColor;\n\
 	vec3 result = (ambient + diffuse + specular) * objectColor;\n\
 	frag_Color = vec4(result, 1.0);\n\
@@ -636,11 +644,19 @@ void main() {\n\
 	vec3 norm = normalize(vert_Normal);\n\
 	vec3 lightDir = normalize(LightPos - frag_Pos);\n\
 	float diff = max(dot(norm, lightDir), 0.0);\n\
+	if(diff < 0.2) diff = 0;\n\
+	if(diff >= 0.2 && diff < 0.4) diff = 0.2;\n\
+	if(diff >= 0.4 && diff < 0.5) diff = 0.4;\n\
+	if(diff >= 0.5) diff = 1;\n\
 	vec3 diffuse = diff * lightColor;\n\
 	//specular\n\
 	vec3 viewDir = normalize(-frag_Pos);\n\
 	vec3 reflectDir = reflect(-lightDir, norm);\n\
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), ex);\n\
+	if(spec < 0.2) spec = 0;\n\
+	if(spec >= 0.2 && spec < 0.4) spec = 0.2;\n\
+	if(spec >= 0.4 && spec < 0.5) spec = 0.4;\n\
+	if(spec >= 0.5) spec = 1;\n\
 	vec3 specular = specularStrength * spec * lightColor;\n\
 	vec3 result = (ambient + diffuse + specular) * objectColor;\n\
 	frag_Color = vec4(result, 1.0);\n\
@@ -762,11 +778,19 @@ void main() {\n\
 	vec3 norm = normalize(vert_Normal);\n\
 	vec3 lightDir = normalize(LightPos - frag_Pos);\n\
 	float diff = max(dot(norm, lightDir), 0.0);\n\
+	if(diff < 0.2) diff = 0;\n\
+	if(diff >= 0.2 && diff < 0.4) diff = 0.2;\n\
+	if(diff >= 0.4 && diff < 0.5) diff = 0.4;\n\
+	if(diff >= 0.5) diff = 1;\n\
 	vec3 diffuse = diff * lightColor;\n\
 	//specular\n\
 	vec3 viewDir = normalize(-frag_Pos);\n\
 	vec3 reflectDir = reflect(-lightDir, norm);\n\
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), ex);\n\
+	if(spec < 0.2) spec = 0;\n\
+	if(spec >= 0.2 && spec < 0.4) spec = 0.2;\n\
+	if(spec >= 0.4 && spec < 0.5) spec = 0.4;\n\
+	if(spec >= 0.5) spec = 1;\n\
 	vec3 specular = specularStrength * spec * lightColor;\n\
 	vec3 result = (ambient + diffuse + specular) * objectColor;\n\
 	frag_Color = vec4(result, 1.0);\n\
@@ -886,11 +910,19 @@ void main() {\n\
 	vec3 norm = normalize(vert_Normal);\n\
 	vec3 lightDir = normalize(LightPos - frag_Pos);\n\
 	float diff = max(dot(norm, lightDir), 0.0);\n\
+	if(diff < 0.2) diff = 0;\n\
+	if(diff >= 0.2 && diff < 0.4) diff = 0.2;\n\
+	if(diff >= 0.4 && diff < 0.5) diff = 0.4;\n\
+	if(diff >= 0.5) diff = 1;\n\
 	vec3 diffuse = diff * lightColor;\n\
 	//specular\n\
 	vec3 viewDir = normalize(-frag_Pos);\n\
 	vec3 reflectDir = reflect(-lightDir, norm);\n\
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), ex);\n\
+	if(spec < 0.2) spec = 0;\n\
+	if(spec >= 0.2 && spec < 0.4) spec = 0.2;\n\
+	if(spec >= 0.4 && spec < 0.5) spec = 0.4;\n\
+	if(spec >= 0.5) spec = 1;\n\
 	vec3 specular = specularStrength * spec * lightColor;\n\
 	vec3 result = (ambient + diffuse + specular) * objectColor;\n\
 	frag_Color = vec4(result, 1.0);\n\
@@ -1012,11 +1044,19 @@ void main() {\n\
 	vec3 norm = normalize(vert_Normal);\n\
 	vec3 lightDir = normalize(LightPos - frag_Pos);\n\
 	float diff = max(dot(norm, lightDir), 0.0);\n\
+	if(diff < 0.2) diff = 0;\n\
+	if(diff >= 0.2 && diff < 0.4) diff = 0.2;\n\
+	if(diff >= 0.4 && diff < 0.5) diff = 0.4;\n\
+	if(diff >= 0.5) diff = 1;\n\
 	vec3 diffuse = diff * lightColor;\n\
 	//specular\n\
 	vec3 viewDir = normalize(-frag_Pos);\n\
 	vec3 reflectDir = reflect(-lightDir, norm);\n\
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), ex);\n\
+	if(spec < 0.2) spec = 0;\n\
+	if(spec >= 0.2 && spec < 0.4) spec = 0.2;\n\
+	if(spec >= 0.4 && spec < 0.5) spec = 0.4;\n\
+	if(spec >= 0.5) spec = 1;\n\
 	vec3 specular = specularStrength * spec * lightColor;\n\
 	vec3 result = (ambient + diffuse + specular) * objectColor;\n\
 	frag_Color = vec4(result, 1.0);\n\
@@ -1027,7 +1067,7 @@ void main() {\n\
 
 	void setupObject() {
 
-		loadOBJ("cube.obj", vertices, uvs, normals);
+		loadOBJ("Sephiroth_KH2.obj", vertices, uvs, normals);
 
 		glGenVertexArrays(1, &objectVao);
 		glBindVertexArray(objectVao);
