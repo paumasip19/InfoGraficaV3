@@ -3,7 +3,7 @@ c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(596): 
 c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(730): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
 c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(862): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
 c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(996): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(1128): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(1130): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
 c:\users\pauma\source\repos\infograficav3\glframework\code\src\render.cpp(200): warning C4715: 'loadOBJ': not all control paths return a value
   GL_framework.vcxproj -> C:\Users\pauma\source\repos\InfoGraficaV3\glframework\x64\Debug\GL_framework.exe
   0 File(s) copied

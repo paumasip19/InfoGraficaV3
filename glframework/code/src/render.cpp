@@ -34,7 +34,7 @@ void drawAxis();
 namespace RenderVars {
 	const float FOV = glm::radians(65.f); //Como de cerca esta la camara
 	const float zNear = 1.f; //Como de cerca deja de renderizar
-	const float zFar = 50.f; //Como de lejos deja de renderizar
+	const float zFar = 50000.f; //Como de lejos deja de renderizar
 
 	glm::mat4 _projection;
 	glm::mat4 _modelView;
@@ -535,7 +535,7 @@ void main() {\n\
 
 	void setupObject() {
 
-		loadOBJ("pistola1.obj", vertices, uvs, normals);
+		loadOBJ("Noria.obj", vertices, uvs, normals);
 		
 		glGenVertexArrays(1, &objectVao);
 		glBindVertexArray(objectVao);
@@ -669,7 +669,7 @@ void main() {\n\
 
 
 
-		loadOBJ("trash.obj", vertices, uvs, normals);
+		loadOBJ("BaseNoria.obj", vertices, uvs, normals);
 
 		glGenVertexArrays(1, &objectVao);
 		glBindVertexArray(objectVao);
@@ -801,7 +801,7 @@ void main() {\n\
 
 	void setupObject() {
 
-		loadOBJ("wolf.obj", vertices, uvs, normals);
+		loadOBJ("CabinaNoria.obj", vertices, uvs, normals);
 
 		glGenVertexArrays(1, &objectVao);
 		glBindVertexArray(objectVao);
@@ -935,7 +935,7 @@ void main() {\n\
 
 
 
-		loadOBJ("Concha.obj", vertices, uvs, normals);
+		loadOBJ("Trump.obj", vertices, uvs, normals);
 
 		glGenVertexArrays(1, &objectVao);
 		glBindVertexArray(objectVao);
@@ -1000,7 +1000,7 @@ void main() {\n\
 	}
 }
 
-namespace MainCharacter {
+namespace Object5 {
 	GLuint objectVao;
 	GLuint objectVbo[2];
 	GLuint objectShaders[2];
@@ -1067,7 +1067,9 @@ void main() {\n\
 
 	void setupObject() {
 
-		loadOBJ("Sephiroth_KH2.obj", vertices, uvs, normals);
+
+
+		loadOBJ("Pollo.obj", vertices, uvs, normals);
 
 		glGenVertexArrays(1, &objectVao);
 		glBindVertexArray(objectVao);
@@ -1115,7 +1117,7 @@ void main() {\n\
 		glUniformMatrix3fv(glGetUniformLocation(objectProgram, "viewPos"), 1, GL_FALSE, glm::value_ptr(RV::_cameraPoint));
 		//std::cout << RV::_cameraPoint.x <<" "<< RV::_cameraPoint.y <<" "<< RV::_cameraPoint.z << std::endl;
 
-		glm::mat4 obj = glm::translate(objMat, glm::vec3(0.f, 0.f, 0.f));
+		glm::mat4 obj = glm::translate(objMat, glm::vec3(-12.f, 0.f, -20.f));
 		glUniformMatrix4fv(glGetUniformLocation(objectProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(obj));
 		glUniform3f(glGetUniformLocation(objectProgram, "objectColor"), oC.x, oC.y, oC.z);
 		glUniform3f(glGetUniformLocation(objectProgram, "light"), lPos.x, lPos.y, lPos.z);
@@ -1125,12 +1127,13 @@ void main() {\n\
 		glUniform1f(glGetUniformLocation(objectProgram, "ambientStrength"), ambientStrength);
 		glUniform1f(glGetUniformLocation(objectProgram, "specularStrength"), specularStrength);
 
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, normals.size());
 
 		glUseProgram(0);
 		glBindVertexArray(0);
 	}
 }
+
 
 
 static const GLchar * vertex_shader_source[] =
@@ -1258,7 +1261,7 @@ void GLinit(int width, int height) {
 
 	Object4::setupObject();
 
-	MainCharacter::setupObject();
+	Object5::setupObject();
 
 
 	glGenVertexArrays(1, &myVao);
@@ -1283,7 +1286,7 @@ void GLcleanup() {
 
 	Object4::cleanupObject();
 
-	MainCharacter::cleanupObject();
+	Object5::cleanupObject();
 
 	/////////////////////////////////////////////////////TODO
 
@@ -1364,7 +1367,7 @@ void GLrender(float dt) {
 
 	Object4::drawObject(accum);
 
-	MainCharacter::drawObject(accum);
+	Object5::drawObject(accum);
 
 	/////////////////////////////////////////////////////TODO
 
