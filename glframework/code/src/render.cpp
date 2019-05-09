@@ -15,6 +15,10 @@
 
 #include "GL_framework.h"
 
+const float pi = 3.141592;
+
+bool exercicis[10] = { true, false, false, false, false, false, false, false, false, false };
+
 bool dolly = false;
 float modifiedFOV = 65.f;
 
@@ -296,12 +300,17 @@ void drawAxis() {
 }
 }
 
+
 ////////////////////////////////////////////////// CUBE
 namespace Cube {
 GLuint cubeVao;
 GLuint cubeVbo[3];
 GLuint cubeShaders[2];
 GLuint cubeProgram;
+float radius = 4;
+float frequency = 0.2;
+float numCabins = 10;
+
 glm::mat4 objMat = glm::mat4(1.f);
 
 extern const float halfW = 0.5f;
@@ -435,31 +444,35 @@ void drawCube(float time) {
 
 	objMat = glm::mat4(1.f);
 	objMat[3][3] = 1.f;
+	
+	glm::mat4 obj[10];
 
-	glm::mat4 obj1 = glm::translate(objMat, glm::vec3(-2.f, 0.f, 0.f));	//Cubo 1 movido a la izquierda
-	glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(obj1));	
-	glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
-	glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+	for (int i = 0; i < 10; i++)
+	{
+		obj[i] = glm::translate(objMat, glm::vec3(radius * glm::cos((2 * pi * frequency * time) + ((2 * pi * i) / numCabins)), radius * glm::sin((2 * pi * frequency * time) + ((2 * pi * i) / numCabins)), 0.f));
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(obj[i]));
+		glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+		glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+	}
 
 
-	glm::mat4 obj2 = glm::rotate(obj1, time, glm::vec3(0.f, 1.f, 0.f)); //Cubo 2 rota en el eje de las Y sobre el obj1
+	/*glm::mat4 obj2 = glm::rotate(obj1, time, glm::vec3(0.f, 1.f, 0.f)); //Cubo 2 rota en el eje de las Y sobre el obj1
 	
 	obj2 = glm::scale(obj2, glm::vec3(sin(time) + 2, sin(time) + 2, sin(time) + 2)); //Hace el escalado
 	obj2 = glm::rotate(obj2, time, glm::vec3(0.f, 1.f, 0.f)); // Rota sobre si mismo
 
-	obj2 = glm::translate(obj2, glm::vec3(2.f, 0.f, 0.f)); //Se mueve a la derecha
+	obj2 = glm::translate(obj2, glm::vec3(2.f, 0.f, 0.f)); //Se mueve a la derecha*/
 
 
-	glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(obj2));
+	/*glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(obj2));
 	glUniform4f(glGetUniformLocation(cubeProgram, "color"), (float)sin(time) * 0.5f + 0.5f, (float)cos(time)* 0.5f + 0.5f, 0.0f, 1.0f);
-	glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+	glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);*/
 	
 	glUseProgram(0);
 	glBindVertexArray(0);
 	glDisable(GL_PRIMITIVE_RESTART);
 }
 }
-
 
 glm::vec3 oC = { 0.5f, 0.5f, 0.5f };
 glm::vec3 lPos = { 10.f, 15.f, 0.f };
@@ -1357,9 +1370,9 @@ void GLrender(float dt) {
 
 	
 
-	//Cube::drawCube(accum);
+	if(exercicis[0]) Cube::drawCube(accum);
 
-	Object1::drawObject(accum);
+	/*Object1::drawObject(accum);
 
 	Object2::drawObject(accum);
 
@@ -1367,7 +1380,7 @@ void GLrender(float dt) {
 
 	Object4::drawObject(accum);
 
-	Object5::drawObject(accum);
+	Object5::drawObject(accum);*/
 
 	/////////////////////////////////////////////////////TODO
 
@@ -1420,6 +1433,118 @@ void GUI() {
 		ImGui::DragFloat("Specular Strength", &specularStrength, 0.05f, 0.f, 1.f);
 		ImGui::DragFloat("Exponent Light", &exponent, 8.f, 1, 256);
 
+		if (ImGui::TreeNode("Exercicis"))
+		{
+			if (ImGui::TreeNode("Exercici 1"))
+			{
+				if (ImGui::Button("Exercici A"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 0) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici B"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 1) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici C"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 2) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+
+
+				ImGui::TreePop();
+			}
+
+			if (ImGui::TreeNode("Exercici 2"))
+			{
+				if (ImGui::Button("Exercici A"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 3) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici B"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 4) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici C"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 5) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				ImGui::TreePop();
+			}
+
+			if (ImGui::TreeNode("Exercici 3"))
+			{
+				if (ImGui::Button("Exercici A"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 6) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici B"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 7) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici C"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 8) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				if (ImGui::Button("Exercici D"))
+				{
+					for (int i = 0; i < 10; i++)
+					{
+						if (i == 9) exercicis[i] = true;
+						else exercicis[i] = false;
+					}
+				}
+
+				ImGui::TreePop();
+			}
+
+			ImGui::TreePop();
+		}
+
 		if (ImGui::Button("Dolly Effect"))
 		{
 			dolly = true;
@@ -1428,6 +1553,7 @@ void GUI() {
 		{
 			dolly = false;
 		}
+
 		
 
 		/////////////////////////////////////////////////////////
