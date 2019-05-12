@@ -107,7 +107,7 @@ namespace Axis {
 
 namespace RenderVars {
 	const float FOV = glm::radians(65.f);
-	const float zNear = 1.f;
+	const float zNear = 0.01f;
 	const float zFar = 50.f;
 
 	glm::mat4 _projection;
@@ -487,7 +487,7 @@ namespace Object {
 		glBindAttribLocation(props.objProgram, 1, "in_Normal");
 		linkProgram(props.objProgram);
 	}
-	void cleanupObject(ObjectProps props) {
+	void cleanupObject(ObjectProps &props) {
 		glDeleteBuffers(3, props.objVbo);
 		glDeleteVertexArrays(1, &props.objVao);
 
@@ -499,7 +499,7 @@ namespace Object {
 	void updateObject(const glm::mat4& transform, ObjectProps props) {
 		props.objMat = transform;
 	}
-	void drawObject(ObjectProps props) {
+	void drawObject(ObjectProps &props) {
 		glEnable(GL_PRIMITIVE_RESTART);
 		glBindVertexArray(props.objVao);
 		glUseProgram(props.objProgram);
@@ -507,7 +507,7 @@ namespace Object {
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
-		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, props.vertices.size());
 
 		glUseProgram(0);
 		glBindVertexArray(0);
@@ -541,7 +541,7 @@ namespace Trump {
 	ObjectProps props;
 	GLchar * modelPath("models/Trump.obj");
 	GLchar * vsPath("shaders/vertex.vs");
-	GLchar * fsPath("shaders/fragment.fs");
+	GLchar * fsPath("shaders/trump.fs");
 }
 
 namespace Chicken {
@@ -559,13 +559,12 @@ void GLinit(int width, int height) {
 	glClearDepth(1.f);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 
 	// Setup shaders & geometry
 	Axis::setupAxis();
-	Cube::setupCube();
 	Object::setupObject(Cabina::props, Cabina::modelPath, Cabina::vsPath, Cabina::fsPath);
 	Object::setupObject(Noria::props, Noria::modelPath, Noria::vsPath, Noria::fsPath);
 	Object::setupObject(Base::props, Base::modelPath, Base::vsPath, Base::fsPath);
@@ -585,7 +584,6 @@ void GLinit(int width, int height) {
 
 void GLcleanup() {
 	Axis::cleanupAxis();
-	Cube::cleanupCube();
 	Object::cleanupObject(Noria::props);
 	Object::cleanupObject(Cabina::props);
 	Object::cleanupObject(Base::props);
@@ -603,12 +601,12 @@ void GLcleanup() {
 void GLrender(float dt) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	RV::_modelView = glm::mat4(1.f);
+	/*RV::_modelView = glm::mat4(1.f);
 	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
-	RV::_MVP = RV::_projection * RV::_modelView;
+	RV::_MVP = RV::_projection * RV::_modelView;*/
 
 	Axis::drawAxis();
 	/////////////////////////////////////////////////////TODO
@@ -619,22 +617,17 @@ void GLrender(float dt) {
 	/////////////////////////////////////////////////////////
 	int maxCabines = 20;
 	float radius = 7.f;
-	float tau = 2 * glm::pi<float>();
+	float tau = glm::two_pi<float>();
 	float freq = 0.1f;
 	accum += dt;
 
-	Object::drawObject(Noria::props);
-	Object::drawObject(Base::props);
-	Object::drawObject(Trump::props);
-	Object::drawObject(Chicken::props);
-
 	//std::cout << accum << std::endl;
 	//std::cout << glm::cos(tau*freq*accum) << std::endl;
-	if (glm::cos(tau*freq*accum) >= 0.9999f) accum = 0;
+	if (glm::cos(tau*freq*accum) >= 0.9999f) accum = 0; //reset accum at the end of the wheelloop
 
-	for (int i = 0; i < maxCabines; i++) 
+	for (int i = 0; i < maxCabines; i++)
 	{
-		if (i == 0) 
+		if (i == 0)
 		{
 			Noria::props.objMat = glm::rotate(glm::mat4(1.f), accum*freq*tau, glm::vec3(0, 0, 1));
 			glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum), radius * glm::sin(tau*freq*accum), 0);
@@ -642,11 +635,30 @@ void GLrender(float dt) {
 			Trump::props.objMat = glm::translate(Trump::props.objMat, { -0.25f,-0.8f,0 });
 			Chicken::props.objMat = glm::translate(Chicken::props.objMat, { 0.25f,-0.8f,0 });
 
+			RV::_modelView = glm::translate(glm::mat4(1.0f), -position - glm::vec3{ -0.25f, -0.4f, 0 });
+			RV::_modelView = glm::translate(RV::_modelView, { 0,0,-1 });
+			RV::_MVP = RV::_projection * RV::_modelView;
 		}
 		glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum + (tau*i / maxCabines)), radius * glm::sin(tau*freq*accum + (tau*i / maxCabines)), 0);
 		Cabina::props.objMat = glm::translate(glm::mat4(1.f), position);
 		Object::drawObject(Cabina::props);
 	}
+
+
+	Object::drawObject(Noria::props);
+	Object::drawObject(Base::props);
+	Object::drawObject(Trump::props);
+	Object::drawObject(Chicken::props);
+
+
+	//RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
+	//RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
+	//RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
+
+	//RV::_MVP = Trump::props.objMat;
+	//RV::_MVP = glm::translate(RV::_MVP, { 0,0, -100 });
+
+	
 
 	ImGui::Render();
 }

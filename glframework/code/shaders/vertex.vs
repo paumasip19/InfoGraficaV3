@@ -4,9 +4,9 @@ in vec3 in_Normal;
 
 out vec4 vert_Normal;
 
-uniform mat4 objMat;
-uniform mat4 mv_Mat;
-uniform mat4 mvpMat;
+uniform mat4 objMat; //model
+uniform mat4 mv_Mat; //view
+uniform mat4 mvpMat; // projection * view
 
 void main() 
 {
