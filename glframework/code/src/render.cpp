@@ -16,8 +16,10 @@
 #include "GL_framework.h"
 
 float accum{0};
-
+float angle{ glm::pi<float>()/4 };
+float pendulumVel{ 0 };
 int ex1{ 0 };
+float ex1startnum{ 0 };
 int ex2{ 0 };
 int ex3{ 0 };
 
@@ -382,7 +384,7 @@ namespace Cube {
 		20, 21, 22, 23, UCHAR_MAX
 	};
 
-	void setupCube() {
+	void setupCube(GLchar* vsPath, GLchar* fsPath) {
 		glGenVertexArrays(1, &cubeVao);
 		glBindVertexArray(cubeVao);
 		glGenBuffers(3, cubeVbo);
@@ -405,8 +407,8 @@ namespace Cube {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		//std::cout << cube_fragShader << std::endl;
-		cubeShaders[0] = compileAndLoadShader("shaders/vertex.vs", GL_VERTEX_SHADER, "cubeVert");
-		cubeShaders[1] = compileAndLoadShader("shaders/fragment.fs", GL_FRAGMENT_SHADER, "cubeFrag");
+		cubeShaders[0] = compileAndLoadShader(vsPath, GL_VERTEX_SHADER, "cubeVert");
+		cubeShaders[1] = compileAndLoadShader(fsPath, GL_FRAGMENT_SHADER, "cubeFrag");
 		//cubeShaders[2] = compileAndLoadShader("shaders/geometry.gs", GL_GEOMETRY_SHADER, "cubeGeo");
 
 		cubeProgram = glCreateProgram();
@@ -453,7 +455,7 @@ struct ObjectProps
 	GLuint objVbo[3];
 	GLuint objShaders[3];
 	GLuint objProgram;
-	glm::mat4 objMat = glm::mat4(1.f);
+	glm::mat4 objMat;
 
 	std::vector< glm::vec3 > vertices, normals;
 	std::vector< glm::vec2 > uvs;
@@ -464,6 +466,8 @@ namespace Object {
 	void setupObject(ObjectProps &props, GLchar * modelPath, GLchar * vsPath, GLchar * fsPath) {
 
 		loadOBJ(modelPath, props.vertices, props.uvs, props.normals);
+
+		props.objMat = glm::mat4(1.f);
 
 		glGenVertexArrays(1, &props.objVao);
 		glBindVertexArray(props.objVao);
@@ -503,6 +507,10 @@ namespace Object {
 		glDeleteShader(props.objShaders[0]);
 		glDeleteShader(props.objShaders[1]);
 		//glDeleteShader(cubeShaders[2]);
+
+		props.vertices.clear();
+		props.uvs.clear();
+		props.normals.clear();
 	}
 	void updateObject(const glm::mat4& transform, ObjectProps props) {
 		props.objMat = transform;
@@ -527,36 +535,26 @@ namespace Object {
 namespace Noria {
 	ObjectProps props;
 	GLchar * modelPath("models/Noria.obj");
-	GLchar * vsPath("shaders/vertex.vs");
-	GLchar * fsPath("shaders/fragment.fs");
 }
 
 namespace Cabina {
 	ObjectProps props;
 	GLchar * modelPath("models/CabinaNoria.obj");
-	GLchar * vsPath("shaders/vertex.vs");
-	GLchar * fsPath("shaders/fragment.fs");
 }
 
 namespace Base {
 	ObjectProps props;
 	GLchar * modelPath("models/BaseNoria.obj");
-	GLchar * vsPath("shaders/vertex.vs");
-	GLchar * fsPath("shaders/fragment.fs");
 }
 
 namespace Trump {
 	ObjectProps props;
 	GLchar * modelPath("models/Trump.obj");
-	GLchar * vsPath("shaders/vertex.vs");
-	GLchar * fsPath("shaders/trump.fs");
 }
 
 namespace Chicken {
 	ObjectProps props;
 	GLchar * modelPath("models/Pollo.obj");
-	GLchar * vsPath("shaders/vertex.vs");
-	GLchar * fsPath("shaders/fragment.fs");
 }
 
 #pragma endregion
@@ -565,24 +563,34 @@ namespace Chicken {
 
 void initEx1() 
 {
+	ex1Enabled = true;
+	ex2Enabled = ex3Enabled = false;
 	accum = 0;
 
-	Object::setupObject(Cabina::props, Cabina::modelPath, Cabina::vsPath, Cabina::fsPath);
-	Object::setupObject(Noria::props, Noria::modelPath, Noria::vsPath, Noria::fsPath);
-	Object::setupObject(Base::props, Base::modelPath, Base::vsPath, Base::fsPath);
-	Object::setupObject(Trump::props, Trump::modelPath, Trump::vsPath, Trump::fsPath);
-	Object::setupObject(Chicken::props, Chicken::modelPath, Chicken::vsPath, Chicken::fsPath);
+	Object::setupObject(Cabina::props, Cabina::modelPath, "shaders/vertex.vs", "shaders/fragment.fs");
+	Object::setupObject(Noria::props, Noria::modelPath, "shaders/vertex.vs", "shaders/fragment.fs");
+	Object::setupObject(Base::props, Base::modelPath, "shaders/vertex.vs", "shaders/fragment.fs");
+	Object::setupObject(Trump::props, Trump::modelPath, "shaders/vertex.vs", "shaders/fragment.fs");
+	Object::setupObject(Chicken::props, Chicken::modelPath, "shaders/vertex.vs", "shaders/fragment.fs");
 
-	Base::props.objMat = glm::translate(Base::props.objMat, { 0,-8,0 });
+	Base::props.objMat = glm::translate(glm::mat4(1.f) , { 0,-8,0 });
 
 };
 
 void initEx2() {
+	ex2Enabled = true;
+	ex1Enabled = ex3Enabled = false;
+	Cube::setupCube("shaders/light.vs", "shaders/light.fs");
+	Object::setupObject(Trump::props, Trump::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
+	Object::setupObject(Chicken::props, Chicken::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
 
+	Trump::props.objMat = glm::translate(Trump::props.objMat, glm::vec3(-1, 0, 0));
+	Chicken::props.objMat = glm::translate(Chicken::props.objMat, glm::vec3(1, 0, 0));
 }
 
 void initEx3() {
-
+	ex3Enabled = true;
+	ex2Enabled = ex1Enabled = false;
 }
 
 #pragma endregion
@@ -622,7 +630,9 @@ void Ex1Cleanup() {
 }
 
 void Ex2Cleanup() {
-
+	Cube::cleanupCube();
+	Object::cleanupObject(Trump::props);
+	Object::cleanupObject(Chicken::props);
 }
 
 void Ex3Cleanup() {
@@ -652,6 +662,11 @@ void RenderEx1(float dt) {
 	float tau = glm::two_pi<float>();
 	float freq = 0.1f;
 	accum += dt;
+	if (ex1startnum < 2) {
+		RV::_modelView = glm::mat4(1.f);
+		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
+		ex1startnum += dt;
+	}
 
 	if (glm::cos(tau*freq*accum) >= 0.9999f) accum = 0; //reset accum at the end of the wheelloop
 
@@ -665,11 +680,12 @@ void RenderEx1(float dt) {
 			Trump::props.objMat = glm::translate(Trump::props.objMat, { -0.25f,-0.8f,0 });
 			Chicken::props.objMat = glm::translate(Chicken::props.objMat, { 0.25f,-0.8f,0 });
 
-			//Shot reverse Shot
-			if ((int)accum % 2 == 0) RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(-90.f), glm::vec3{ 0, 1, 0 }); //Trump
-			else RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3{ 0, 1, 0 }); //Chicken
-
-			RV::_modelView = glm::translate(RV::_modelView, -position - glm::vec3{ 0, -0.5f, 0 });
+			if (ex1startnum >= 2) {
+				//Shot reverse Shot
+				if ((int)accum % 2 == 0) RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(-90.f), glm::vec3{ 0, 1, 0 }); //Trump
+				else RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3{ 0, 1, 0 }); //Chicken
+				RV::_modelView = glm::translate(RV::_modelView, -position - glm::vec3{ 0, -0.5f, 0 });
+			}
 			RV::_MVP = RV::_projection * RV::_modelView;
 		}
 
@@ -678,11 +694,79 @@ void RenderEx1(float dt) {
 		Object::drawObject(Cabina::props);
 	}
 
-
+	//draw
 	Object::drawObject(Noria::props);
 	Object::drawObject(Base::props);
 	Object::drawObject(Trump::props);
 	Object::drawObject(Chicken::props);
+
+}
+
+void RenderEx2(float dt)
+{
+	RV::_modelView = glm::mat4(1.f);
+	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
+	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
+	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
+
+	RV::_MVP = RV::_projection * RV::_modelView;
+
+	float radius = 2;
+	float freq = (0.1 / radius);
+	pendulumVel -= sin(angle) * freq* dt;
+
+	angle += pendulumVel ;
+	glm::vec3 originPos{ 0,3, 0 };
+	glm::vec3 pendulumPos{originPos.x + glm::sin(angle)*radius,originPos.y + glm::cos(angle)*-radius,0};
+
+	Cube::objMat = glm::translate(glm::mat4(1.f), glm::vec3(originPos.x, radius, 0));
+	Cube::objMat = glm::translate(Cube::objMat, pendulumPos);
+
+	//light color
+	glBindVertexArray(Cube::cubeVao);
+	glUseProgram(Cube::cubeProgram);
+	glm::vec3 lightColor{ 1.0f, 1.0f, 0.f };
+	GLint lightColorLoc = glGetUniformLocation(Cube::cubeProgram, "lightColor");
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+
+	glBindVertexArray(0);
+
+	//trump lighting
+	glBindVertexArray(Trump::props.objVao);
+	glUseProgram(Trump::props.objProgram);
+	GLint objectColorLoc = glGetUniformLocation(Trump::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Trump::props.objProgram, "lightColor");
+	GLint lightPosLoc = glGetUniformLocation(Trump::props.objProgram, "lightPos");
+	GLint viewPosLoc = glGetUniformLocation(Trump::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	glm::vec3 cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	//chicken lighting
+	glBindVertexArray(Chicken::props.objVao);
+	glUseProgram(Chicken::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Chicken::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Chicken::props.objProgram, "lightColor");
+	lightPosLoc = glGetUniformLocation(Chicken::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Chicken::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glBindVertexArray(0);
+
+	Cube::drawCube();
+	Object::drawObject(Chicken::props);
+	Object::drawObject(Trump::props);
+	//Object::drawObject(Chicken::props);
+}
+
+void RenderEx3(float dt)
+{
 
 }
 
@@ -691,47 +775,30 @@ void RenderEx1(float dt) {
 void GLrender(float dt) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/*RV::_modelView = glm::mat4(1.f);
-	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
-	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
-	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
-
-	RV::_MVP = RV::_projection * RV::_modelView;*/
-
-	Axis::drawAxis();
-	/////////////////////////////////////////////////////TODO
-	// Do your render code here
-	// ...
-	// ...
-	// ...
-	/////////////////////////////////////////////////////////
-
+	//render code
 	if(ex1Enabled) RenderEx1(dt);
+	else if(ex2Enabled) RenderEx2(dt);
+	else if (ex3Enabled) RenderEx3(dt);
 
-	
+	Axis::drawAxis(); //draw axis
 
 	ImGui::Render();
 
+	//swap exercises
 	if (ex1 & 1)
 	{
 		Ex1Cleanup();
 		initEx1();
-		ex1Enabled = true;
-		ex2Enabled = ex3Enabled = false;
 		ex1--;
 	}
 	else if (ex2 & 1) {
 		Ex2Cleanup();
 		initEx2();
-		ex2Enabled = true;
-		ex1Enabled = ex3Enabled = false;
 		ex2--;
 	}
 	else if (ex3 & 1) {
 		Ex3Cleanup();
 		initEx3();
-		ex3Enabled = true;
-		ex2Enabled = ex1Enabled = false;
 		ex3--;
 	}
 }
@@ -752,6 +819,11 @@ void GUI() {
 
 		if (ImGui::Button("Exercise 1")) ex1++;
 		if (ImGui::Button("Exercise 2")) ex2++;
+		if (ImGui::TreeNode("Exercise 2 Props"))
+		{
+			if (ImGui::Button("Reload Shader"));
+			ImGui::TreePop();
+		}
 		if (ImGui::Button("Exercise 3")) ex3++;
 	}
 	// .........................
