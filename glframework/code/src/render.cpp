@@ -15,7 +15,15 @@
 
 #include "GL_framework.h"
 
-float accum = 0;
+float accum{0};
+
+int ex1{ 0 };
+int ex2{ 0 };
+int ex3{ 0 };
+
+bool ex1Enabled{ true };
+bool ex2Enabled{ false };
+bool ex3Enabled{ false };
 
 bool loadOBJ(const char *path, std::vector<glm::vec3> &out_vertices, std::vector<glm::vec2> &out_uvs, std::vector<glm::vec3> &out_normals)
 {
@@ -553,6 +561,32 @@ namespace Chicken {
 
 #pragma endregion
 
+#pragma region Inits
+
+void initEx1() 
+{
+	accum = 0;
+
+	Object::setupObject(Cabina::props, Cabina::modelPath, Cabina::vsPath, Cabina::fsPath);
+	Object::setupObject(Noria::props, Noria::modelPath, Noria::vsPath, Noria::fsPath);
+	Object::setupObject(Base::props, Base::modelPath, Base::vsPath, Base::fsPath);
+	Object::setupObject(Trump::props, Trump::modelPath, Trump::vsPath, Trump::fsPath);
+	Object::setupObject(Chicken::props, Chicken::modelPath, Chicken::vsPath, Chicken::fsPath);
+
+	Base::props.objMat = glm::translate(Base::props.objMat, { 0,-8,0 });
+
+};
+
+void initEx2() {
+
+}
+
+void initEx3() {
+
+}
+
+#pragma endregion
+
 void GLinit(int width, int height) {
 	glViewport(0, 0, width, height);
 	glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -565,13 +599,6 @@ void GLinit(int width, int height) {
 
 	// Setup shaders & geometry
 	Axis::setupAxis();
-	Object::setupObject(Cabina::props, Cabina::modelPath, Cabina::vsPath, Cabina::fsPath);
-	Object::setupObject(Noria::props, Noria::modelPath, Noria::vsPath, Noria::fsPath);
-	Object::setupObject(Base::props, Base::modelPath, Base::vsPath, Base::fsPath);
-	Object::setupObject(Trump::props, Trump::modelPath, Trump::vsPath, Trump::fsPath);
-	Object::setupObject(Chicken::props, Chicken::modelPath, Chicken::vsPath, Chicken::fsPath);
-	
-
 	/////////////////////////////////////////////////////TODO
 	// Do your init code here
 	// ...
@@ -579,16 +606,34 @@ void GLinit(int width, int height) {
 	// ...
 	/////////////////////////////////////////////////////////
 
-	Base::props.objMat = glm::translate(Base::props.objMat, { 0,-8,0 });
+	initEx1();
+
 }
 
-void GLcleanup() {
-	Axis::cleanupAxis();
+#pragma region ExerciseCleanups
+
+void Ex1Cleanup() {
+
 	Object::cleanupObject(Noria::props);
 	Object::cleanupObject(Cabina::props);
 	Object::cleanupObject(Base::props);
 	Object::cleanupObject(Trump::props);
 	Object::cleanupObject(Chicken::props);
+}
+
+void Ex2Cleanup() {
+
+}
+
+void Ex3Cleanup() {
+
+}
+
+
+#pragma endregion
+
+void GLcleanup() {
+	Axis::cleanupAxis();
 
 	/////////////////////////////////////////////////////TODO
 	// Do your cleanup code here
@@ -597,6 +642,51 @@ void GLcleanup() {
 	// ...
 	/////////////////////////////////////////////////////////
 }
+
+#pragma region renders
+
+void RenderEx1(float dt) {
+
+	int maxCabines = 20;
+	float radius = 7.f;
+	float tau = glm::two_pi<float>();
+	float freq = 0.1f;
+	accum += dt;
+
+	if (glm::cos(tau*freq*accum) >= 0.9999f) accum = 0; //reset accum at the end of the wheelloop
+
+	for (int i = 0; i < maxCabines; i++)
+	{
+		if (i == 0)
+		{
+			Noria::props.objMat = glm::rotate(glm::mat4(1.f), accum*freq*tau, glm::vec3(0, 0, 1));
+			glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum), radius * glm::sin(tau*freq*accum), 0);
+			Trump::props.objMat = Chicken::props.objMat = glm::translate(glm::mat4(1.f), position);
+			Trump::props.objMat = glm::translate(Trump::props.objMat, { -0.25f,-0.8f,0 });
+			Chicken::props.objMat = glm::translate(Chicken::props.objMat, { 0.25f,-0.8f,0 });
+
+			//Shot reverse Shot
+			if ((int)accum % 2 == 0) RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(-90.f), glm::vec3{ 0, 1, 0 }); //Trump
+			else RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3{ 0, 1, 0 }); //Chicken
+
+			RV::_modelView = glm::translate(RV::_modelView, -position - glm::vec3{ 0, -0.5f, 0 });
+			RV::_MVP = RV::_projection * RV::_modelView;
+		}
+
+		glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum + (tau*i / maxCabines)), radius * glm::sin(tau*freq*accum + (tau*i / maxCabines)), 0);
+		Cabina::props.objMat = glm::translate(glm::mat4(1.f), position);
+		Object::drawObject(Cabina::props);
+	}
+
+
+	Object::drawObject(Noria::props);
+	Object::drawObject(Base::props);
+	Object::drawObject(Trump::props);
+	Object::drawObject(Chicken::props);
+
+}
+
+#pragma endregion
 
 void GLrender(float dt) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -615,52 +705,35 @@ void GLrender(float dt) {
 	// ...
 	// ...
 	/////////////////////////////////////////////////////////
-	int maxCabines = 20;
-	float radius = 7.f;
-	float tau = glm::two_pi<float>();
-	float freq = 0.1f;
-	accum += dt;
 
-	//std::cout << accum << std::endl;
-	//std::cout << glm::cos(tau*freq*accum) << std::endl;
-	if (glm::cos(tau*freq*accum) >= 0.9999f) accum = 0; //reset accum at the end of the wheelloop
-
-	for (int i = 0; i < maxCabines; i++)
-	{
-		if (i == 0)
-		{
-			Noria::props.objMat = glm::rotate(glm::mat4(1.f), accum*freq*tau, glm::vec3(0, 0, 1));
-			glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum), radius * glm::sin(tau*freq*accum), 0);
-			Trump::props.objMat = Chicken::props.objMat = glm::translate(glm::mat4(1.f), position);
-			Trump::props.objMat = glm::translate(Trump::props.objMat, { -0.25f,-0.8f,0 });
-			Chicken::props.objMat = glm::translate(Chicken::props.objMat, { 0.25f,-0.8f,0 });
-
-			RV::_modelView = glm::translate(glm::mat4(1.0f), -position - glm::vec3{ -0.25f, -0.4f, 0 });
-			RV::_modelView = glm::translate(RV::_modelView, { 0,0,-1 });
-			RV::_MVP = RV::_projection * RV::_modelView;
-		}
-		glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum + (tau*i / maxCabines)), radius * glm::sin(tau*freq*accum + (tau*i / maxCabines)), 0);
-		Cabina::props.objMat = glm::translate(glm::mat4(1.f), position);
-		Object::drawObject(Cabina::props);
-	}
-
-
-	Object::drawObject(Noria::props);
-	Object::drawObject(Base::props);
-	Object::drawObject(Trump::props);
-	Object::drawObject(Chicken::props);
-
-
-	//RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
-	//RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
-	//RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
-
-	//RV::_MVP = Trump::props.objMat;
-	//RV::_MVP = glm::translate(RV::_MVP, { 0,0, -100 });
+	if(ex1Enabled) RenderEx1(dt);
 
 	
 
 	ImGui::Render();
+
+	if (ex1 & 1)
+	{
+		Ex1Cleanup();
+		initEx1();
+		ex1Enabled = true;
+		ex2Enabled = ex3Enabled = false;
+		ex1--;
+	}
+	else if (ex2 & 1) {
+		Ex2Cleanup();
+		initEx2();
+		ex2Enabled = true;
+		ex1Enabled = ex3Enabled = false;
+		ex2--;
+	}
+	else if (ex3 & 1) {
+		Ex3Cleanup();
+		initEx3();
+		ex3Enabled = true;
+		ex2Enabled = ex1Enabled = false;
+		ex3--;
+	}
 }
 
 void GUI() {
@@ -676,6 +749,10 @@ void GUI() {
 		// ...
 		// ...
 		/////////////////////////////////////////////////////////
+
+		if (ImGui::Button("Exercise 1")) ex1++;
+		if (ImGui::Button("Exercise 2")) ex2++;
+		if (ImGui::Button("Exercise 3")) ex3++;
 	}
 	// .........................
 
