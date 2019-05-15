@@ -104,6 +104,7 @@ bool loadOBJ(const char *path, std::vector<glm::vec3> &out_vertices, std::vector
 	fclose(file);
 }
 
+
 ///////// fw decl
 namespace ImGui {
 	void Render();
@@ -516,18 +517,18 @@ namespace Object {
 		props.objMat = transform;
 	}
 	void drawObject(ObjectProps &props) {
-		glEnable(GL_PRIMITIVE_RESTART);
+		//glEnable(GL_PRIMITIVE_RESTART); //para draw elements asi el buffer diferencia un objeto del otro
 		glBindVertexArray(props.objVao);
 		glUseProgram(props.objProgram);
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(props.objMat));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, props.vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
 
 		glUseProgram(0);
 		glBindVertexArray(0);
-		glDisable(GL_PRIMITIVE_RESTART);
+		//glDisable(GL_PRIMITIVE_RESTART);
 	}
 };
 
@@ -601,7 +602,7 @@ void GLinit(int width, int height) {
 	glClearDepth(1.f);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 
