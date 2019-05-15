@@ -582,11 +582,16 @@ void initEx2() {
 	ex2Enabled = true;
 	ex1Enabled = ex3Enabled = false;
 	Cube::setupCube("shaders/light.vs", "shaders/light.fs");
+
+	accum = 0;
+
+	Object::setupObject(Cabina::props, Cabina::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
+	Object::setupObject(Noria::props, Noria::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
+	Object::setupObject(Base::props, Base::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
 	Object::setupObject(Trump::props, Trump::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
 	Object::setupObject(Chicken::props, Chicken::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
 
-	Trump::props.objMat = glm::translate(Trump::props.objMat, glm::vec3(-1, 0, 0));
-	Chicken::props.objMat = glm::translate(Chicken::props.objMat, glm::vec3(1, 0, 0));
+	Base::props.objMat = glm::translate(glm::mat4(1.f), { 0,-8,0 });
 }
 
 void initEx3() {
@@ -705,23 +710,24 @@ void RenderEx1(float dt) {
 
 void RenderEx2(float dt)
 {
-	RV::_modelView = glm::mat4(1.f);
+	/*RV::_modelView = glm::mat4(1.f);
 	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
-	RV::_MVP = RV::_projection * RV::_modelView;
+	RV::_MVP = RV::_projection * RV::_modelView;*/
 
-	float radius = 2;
-	float freq = (0.1 / radius);
-	pendulumVel -= sin(angle) * freq* dt;
+	float radiusPend = 2;
+	float freqPend = (0.1 / radiusPend);
+	pendulumVel -= sin(angle) * freqPend* dt;
 
 	angle += pendulumVel ;
 	glm::vec3 originPos{ 0,3, 0 };
-	glm::vec3 pendulumPos{originPos.x + glm::sin(angle)*radius,originPos.y + glm::cos(angle)*-radius,0};
+	glm::vec3 pendulumPos{originPos.x + glm::sin(angle)*radiusPend,originPos.y + glm::cos(angle)*-radiusPend,0};
 
-	Cube::objMat = glm::translate(glm::mat4(1.f), glm::vec3(originPos.x, radius, 0));
+	Cube::objMat = glm::translate(glm::mat4(1.f), glm::vec3(originPos.x, radiusPend, 0));
 	Cube::objMat = glm::translate(Cube::objMat, pendulumPos);
+
 
 	//light color
 	glBindVertexArray(Cube::cubeVao);
@@ -758,11 +764,82 @@ void RenderEx2(float dt)
 	cameraPos = RV::_cameraPoint;
 	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
 
-	glBindVertexArray(0);
+	glBindVertexArray(Noria::props.objVao);
+	glUseProgram(Noria::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Noria::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Noria::props.objProgram, "lightColor");
+	lightPosLoc = glGetUniformLocation(Noria::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Noria::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
 
+	glBindVertexArray(Base::props.objVao);
+	glUseProgram(Base::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Base::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Base::props.objProgram, "lightColor");
+	lightPosLoc = glGetUniformLocation(Base::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Base::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glBindVertexArray(Cabina::props.objVao);
+	glUseProgram(Cabina::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Cabina::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Cabina::props.objProgram, "lightColor");
+	lightPosLoc = glGetUniformLocation(Cabina::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Cabina::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glBindVertexArray(0);
+	
+	int maxCabines = 20;
+	float radius = 7.f;
+	float tau = glm::two_pi<float>();
+	float freq = 0.1f;
+	accum += dt;
+
+	if (glm::cos(tau*freq*accum) >= 0.9999f) accum = 0; //reset accum at the end of the wheelloop
+
+	for (int i = 0; i < maxCabines; i++)
+	{
+		if (i == 0)
+		{
+			Noria::props.objMat = glm::rotate(glm::mat4(1.f), accum*freq*tau, glm::vec3(0, 0, 1));
+			glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum), radius * glm::sin(tau*freq*accum), 0);
+			Trump::props.objMat = Chicken::props.objMat = glm::translate(glm::mat4(1.f), position);
+			Trump::props.objMat = glm::translate(Trump::props.objMat, { -0.25f,-0.8f,0 });
+			Chicken::props.objMat = glm::translate(Chicken::props.objMat, { 0.25f,-0.8f,0 });
+
+			if (ex1startnum >= 2) {
+				//Shot reverse Shot
+				if ((int)accum % 2 == 0) RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(-90.f), glm::vec3{ 0, 1, 0 }); //Trump
+				else RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3{ 0, 1, 0 }); //Chicken
+				RV::_modelView = glm::translate(RV::_modelView, -position - glm::vec3{ 0, -0.5f, 0 });
+			}
+			RV::_MVP = RV::_projection * RV::_modelView;
+		}
+
+		glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum + (tau*i / maxCabines)), radius * glm::sin(tau*freq*accum + (tau*i / maxCabines)), 0);
+		Cabina::props.objMat = glm::translate(glm::mat4(1.f), position);
+		Object::drawObject(Cabina::props);
+	}
+
+	//draw
 	Cube::drawCube();
-	Object::drawObject(Chicken::props);
+	Object::drawObject(Noria::props);
+	Object::drawObject(Base::props);
 	Object::drawObject(Trump::props);
+	Object::drawObject(Chicken::props);
 	//Object::drawObject(Chicken::props);
 }
 

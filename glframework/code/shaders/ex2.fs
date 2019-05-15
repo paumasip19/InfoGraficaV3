@@ -20,7 +20,11 @@ void main()
 	//diffuse
 	vec3 norm = normalize(vert_Normal);
 	vec3 lightDir = normalize(lightPos - FragPos);
-	float diff = max(dot(norm, lightDir), 0.0f);
+	float diff = max(dot(norm, lightDir), 0.0);
+	if(diff < 0.2) diff = 0;
+	if(diff >= 0.2 && diff < 0.4) diff = 0.2;
+	if(diff >= 0.4 && diff < 0.5) diff = 0.4;
+	if(diff >= 0.5) diff = 1;
 	vec3 diffuse = diff * lightColor;
 
 	//specular
