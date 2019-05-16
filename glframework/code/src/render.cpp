@@ -448,6 +448,131 @@ namespace Cube {
 	}
 }
 
+namespace Cube2 {
+	GLuint cubeVao;
+	GLuint cubeVbo[3];
+	GLuint cubeShaders[3];
+	GLuint cubeProgram;
+	glm::mat4 objMat = glm::mat4(1.f);
+
+	extern const float halfW = 0.5f;
+	int numVerts = 24 + 6; // 4 vertex/face * 6 faces + 6 PRIMITIVE RESTART
+
+						   //   4---------7
+						   //  /|        /|
+						   // / |       / |
+						   //5---------6  |
+						   //|  0------|--3
+						   //| /       | /
+						   //|/        |/
+						   //1---------2
+	glm::vec3 verts[] = {
+		glm::vec3(-halfW, -halfW, -halfW),
+		glm::vec3(-halfW, -halfW,  halfW),
+		glm::vec3(halfW, -halfW,  halfW),
+		glm::vec3(halfW, -halfW, -halfW),
+		glm::vec3(-halfW,  halfW, -halfW),
+		glm::vec3(-halfW,  halfW,  halfW),
+		glm::vec3(halfW,  halfW,  halfW),
+		glm::vec3(halfW,  halfW, -halfW)
+	};
+	glm::vec3 norms[] = {
+		glm::vec3(0.f, -1.f,  0.f),
+		glm::vec3(0.f,  1.f,  0.f),
+		glm::vec3(-1.f,  0.f,  0.f),
+		glm::vec3(1.f,  0.f,  0.f),
+		glm::vec3(0.f,  0.f, -1.f),
+		glm::vec3(0.f,  0.f,  1.f)
+	};
+
+	glm::vec3 cubeVerts[] = {
+		verts[1], verts[0], verts[2], verts[3],
+		verts[5], verts[6], verts[4], verts[7],
+		verts[1], verts[5], verts[0], verts[4],
+		verts[2], verts[3], verts[6], verts[7],
+		verts[0], verts[4], verts[3], verts[7],
+		verts[1], verts[2], verts[5], verts[6]
+	};
+	glm::vec3 cubeNorms[] = {
+		norms[0], norms[0], norms[0], norms[0],
+		norms[1], norms[1], norms[1], norms[1],
+		norms[2], norms[2], norms[2], norms[2],
+		norms[3], norms[3], norms[3], norms[3],
+		norms[4], norms[4], norms[4], norms[4],
+		norms[5], norms[5], norms[5], norms[5]
+	};
+	GLubyte cubeIdx[] = {
+		0, 1, 2, 3, UCHAR_MAX,
+		4, 5, 6, 7, UCHAR_MAX,
+		8, 9, 10, 11, UCHAR_MAX,
+		12, 13, 14, 15, UCHAR_MAX,
+		16, 17, 18, 19, UCHAR_MAX,
+		20, 21, 22, 23, UCHAR_MAX
+	};
+
+	void setupCube(GLchar* vsPath, GLchar* fsPath) {
+		glGenVertexArrays(1, &cubeVao);
+		glBindVertexArray(cubeVao);
+		glGenBuffers(3, cubeVbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, cubeVbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
+		glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, cubeVbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeNorms), cubeNorms, GL_STATIC_DRAW);
+		glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		glPrimitiveRestartIndex(UCHAR_MAX);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeVbo[2]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIdx), cubeIdx, GL_STATIC_DRAW);
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		//std::cout << cube_fragShader << std::endl;
+		cubeShaders[0] = compileAndLoadShader(vsPath, GL_VERTEX_SHADER, "cubeVert");
+		cubeShaders[1] = compileAndLoadShader(fsPath, GL_FRAGMENT_SHADER, "cubeFrag");
+		//cubeShaders[2] = compileAndLoadShader("shaders/geometry.gs", GL_GEOMETRY_SHADER, "cubeGeo");
+
+		cubeProgram = glCreateProgram();
+		glAttachShader(cubeProgram, cubeShaders[0]);
+		glAttachShader(cubeProgram, cubeShaders[1]);
+		//glAttachShader(cubeProgram, cubeShaders[2]);
+		glBindAttribLocation(cubeProgram, 0, "in_Position");
+		glBindAttribLocation(cubeProgram, 1, "in_Normal");
+		linkProgram(cubeProgram);
+	}
+	void cleanupCube() {
+		glDeleteBuffers(3, cubeVbo);
+		glDeleteVertexArrays(1, &cubeVao);
+
+		glDeleteProgram(cubeProgram);
+		glDeleteShader(cubeShaders[0]);
+		glDeleteShader(cubeShaders[1]);
+		//glDeleteShader(cubeShaders[2]);
+	}
+	void updateCube(const glm::mat4& transform) {
+		objMat = transform;
+	}
+	void drawCube() {
+		glEnable(GL_PRIMITIVE_RESTART);
+		glBindVertexArray(cubeVao);
+		glUseProgram(cubeProgram);
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
+		glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+		glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+
+		glUseProgram(0);
+		glBindVertexArray(0);
+		glDisable(GL_PRIMITIVE_RESTART);
+	}
+}
+
 /////////////////////////////////////////////////
 
 struct ObjectProps 
@@ -578,10 +703,15 @@ void initEx1()
 
 };
 
+glm::vec3 moonPosition{ 5, 10, -10 };
+
 void initEx2() {
 	ex2Enabled = true;
 	ex1Enabled = ex3Enabled = false;
 	Cube::setupCube("shaders/light.vs", "shaders/light.fs");
+	Cube2::setupCube("shaders/light.vs", "shaders/light.fs");
+
+	Cube2::objMat = glm::translate(glm::mat4(1.f), moonPosition);
 
 	accum = 0;
 
@@ -710,98 +840,20 @@ void RenderEx1(float dt) {
 
 void RenderEx2(float dt)
 {
-	/*RV::_modelView = glm::mat4(1.f);
+	RV::_modelView = glm::mat4(1.f);
 	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
-	RV::_MVP = RV::_projection * RV::_modelView;*/
+	RV::_MVP = RV::_projection * RV::_modelView;
 
-	float radiusPend = 2;
+	float radiusPend = 0.2f;
 	float freqPend = (0.1 / radiusPend);
 	pendulumVel -= sin(angle) * freqPend* dt;
 
 	angle += pendulumVel ;
-	glm::vec3 originPos{ 0,3, 0 };
-	glm::vec3 pendulumPos{originPos.x + glm::sin(angle)*radiusPend,originPos.y + glm::cos(angle)*-radiusPend,0};
+	glm::vec3 pendulumPos;
 
-	Cube::objMat = glm::translate(glm::mat4(1.f), glm::vec3(originPos.x, radiusPend, 0));
-	Cube::objMat = glm::translate(Cube::objMat, pendulumPos);
-
-
-	//light color
-	glBindVertexArray(Cube::cubeVao);
-	glUseProgram(Cube::cubeProgram);
-	glm::vec3 lightColor{ 1.0f, 1.0f, 0.f };
-	GLint lightColorLoc = glGetUniformLocation(Cube::cubeProgram, "lightColor");
-	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-
-	glBindVertexArray(0);
-
-	//trump lighting
-	glBindVertexArray(Trump::props.objVao);
-	glUseProgram(Trump::props.objProgram);
-	GLint objectColorLoc = glGetUniformLocation(Trump::props.objProgram, "objectColor");
-	lightColorLoc = glGetUniformLocation(Trump::props.objProgram, "lightColor");
-	GLint lightPosLoc = glGetUniformLocation(Trump::props.objProgram, "lightPos");
-	GLint viewPosLoc = glGetUniformLocation(Trump::props.objProgram, "viewPos");
-	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
-	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
-	glm::vec3 cameraPos = RV::_cameraPoint;
-	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
-
-	//chicken lighting
-	glBindVertexArray(Chicken::props.objVao);
-	glUseProgram(Chicken::props.objProgram);
-	objectColorLoc = glGetUniformLocation(Chicken::props.objProgram, "objectColor");
-	lightColorLoc = glGetUniformLocation(Chicken::props.objProgram, "lightColor");
-	lightPosLoc = glGetUniformLocation(Chicken::props.objProgram, "lightPos");
-	viewPosLoc = glGetUniformLocation(Chicken::props.objProgram, "viewPos");
-	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
-	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
-	cameraPos = RV::_cameraPoint;
-	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glBindVertexArray(Noria::props.objVao);
-	glUseProgram(Noria::props.objProgram);
-	objectColorLoc = glGetUniformLocation(Noria::props.objProgram, "objectColor");
-	lightColorLoc = glGetUniformLocation(Noria::props.objProgram, "lightColor");
-	lightPosLoc = glGetUniformLocation(Noria::props.objProgram, "lightPos");
-	viewPosLoc = glGetUniformLocation(Noria::props.objProgram, "viewPos");
-	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
-	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
-	cameraPos = RV::_cameraPoint;
-	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glBindVertexArray(Base::props.objVao);
-	glUseProgram(Base::props.objProgram);
-	objectColorLoc = glGetUniformLocation(Base::props.objProgram, "objectColor");
-	lightColorLoc = glGetUniformLocation(Base::props.objProgram, "lightColor");
-	lightPosLoc = glGetUniformLocation(Base::props.objProgram, "lightPos");
-	viewPosLoc = glGetUniformLocation(Base::props.objProgram, "viewPos");
-	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
-	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
-	cameraPos = RV::_cameraPoint;
-	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glBindVertexArray(Cabina::props.objVao);
-	glUseProgram(Cabina::props.objProgram);
-	objectColorLoc = glGetUniformLocation(Cabina::props.objProgram, "objectColor");
-	lightColorLoc = glGetUniformLocation(Cabina::props.objProgram, "lightColor");
-	lightPosLoc = glGetUniformLocation(Cabina::props.objProgram, "lightPos");
-	viewPosLoc = glGetUniformLocation(Cabina::props.objProgram, "viewPos");
-	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
-	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
-	cameraPos = RV::_cameraPoint;
-	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
-
-	glBindVertexArray(0);
-	
 	int maxCabines = 20;
 	float radius = 7.f;
 	float tau = glm::two_pi<float>();
@@ -815,16 +867,22 @@ void RenderEx2(float dt)
 		if (i == 0)
 		{
 			Noria::props.objMat = glm::rotate(glm::mat4(1.f), accum*freq*tau, glm::vec3(0, 0, 1));
-			glm::vec3 position = glm::vec3(radius * glm::cos(tau*freq*accum), radius * glm::sin(tau*freq*accum), 0);
-			Trump::props.objMat = Chicken::props.objMat = glm::translate(glm::mat4(1.f), position);
+			glm::vec3 positionCab = glm::vec3(radius * glm::cos(tau*freq*accum), radius * glm::sin(tau*freq*accum), 0);
+			Trump::props.objMat = Chicken::props.objMat = glm::translate(glm::mat4(1.f), positionCab);
 			Trump::props.objMat = glm::translate(Trump::props.objMat, { -0.25f,-0.8f,0 });
 			Chicken::props.objMat = glm::translate(Chicken::props.objMat, { 0.25f,-0.8f,0 });
+
+			glm::vec3 originPos = positionCab;
+			pendulumPos = glm::vec3{ originPos.x + glm::sin(angle)*radiusPend,originPos.y + glm::cos(angle)*-radiusPend,0 };
+
+			Cube::objMat = glm::translate(glm::mat4(1.f), pendulumPos);
+			Cube::objMat = glm::scale(Cube::objMat, glm::vec3{ 0.1f });
 
 			if (ex1startnum >= 2) {
 				//Shot reverse Shot
 				if ((int)accum % 2 == 0) RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(-90.f), glm::vec3{ 0, 1, 0 }); //Trump
 				else RV::_modelView = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3{ 0, 1, 0 }); //Chicken
-				RV::_modelView = glm::translate(RV::_modelView, -position - glm::vec3{ 0, -0.5f, 0 });
+				RV::_modelView = glm::translate(RV::_modelView, -positionCab - glm::vec3{ 0, -0.5f, 0 });
 			}
 			RV::_MVP = RV::_projection * RV::_modelView;
 		}
@@ -834,13 +892,115 @@ void RenderEx2(float dt)
 		Object::drawObject(Cabina::props);
 	}
 
+	//light color
+	glBindVertexArray(Cube::cubeVao);
+	glUseProgram(Cube::cubeProgram);
+	glm::vec3 lightColor{ 1.0f, 1.0f, 0.f };
+	GLint lightColorLoc = glGetUniformLocation(Cube::cubeProgram, "lightColor");
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+
+	glBindVertexArray(0);
+
+	//moon color
+
+	glBindVertexArray(Cube2::cubeVao);
+	glUseProgram(Cube2::cubeProgram);
+	glm::vec3 lightColor2 = glm::vec3{ 0.0f, 0.0f, 1.f };
+	GLint lightColorLoc2 = glGetUniformLocation(Cube2::cubeProgram, "lightColor");
+	glUniform3f(lightColorLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+
+	glBindVertexArray(0);
+
+	//trump lighting
+	glBindVertexArray(Trump::props.objVao);
+	glUseProgram(Trump::props.objProgram);
+	GLint objectColorLoc = glGetUniformLocation(Trump::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Trump::props.objProgram, "lightColor");
+	GLint lightPosLoc = glGetUniformLocation(Trump::props.objProgram, "lightPos");
+	lightColorLoc2 = glGetUniformLocation(Trump::props.objProgram, "moonColor");
+	GLint lightPosLoc2 = glGetUniformLocation(Trump::props.objProgram, "moonPos");
+	GLint viewPosLoc = glGetUniformLocation(Trump::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc2, moonPosition.x, moonPosition.y, moonPosition.z);
+	glUniform3f(lightColorLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	glm::vec3 cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	//chicken lighting
+	glBindVertexArray(Chicken::props.objVao);
+	glUseProgram(Chicken::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Chicken::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Chicken::props.objProgram, "lightColor");
+	lightColorLoc2 = glGetUniformLocation(Chicken::props.objProgram, "moonColor");
+	lightPosLoc2 = glGetUniformLocation(Chicken::props.objProgram, "moonPos");
+	lightPosLoc = glGetUniformLocation(Chicken::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Chicken::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+	glUniform3f(lightColorLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glBindVertexArray(Noria::props.objVao);
+	glUseProgram(Noria::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Noria::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Noria::props.objProgram, "lightColor");
+	lightColorLoc2 = glGetUniformLocation(Noria::props.objProgram, "moonColor");
+	lightPosLoc2 = glGetUniformLocation(Noria::props.objProgram, "moonPos");
+	lightPosLoc = glGetUniformLocation(Noria::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Noria::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc2, moonPosition.x, moonPosition.y, moonPosition.z);
+	glUniform3f(lightColorLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glBindVertexArray(Base::props.objVao);
+	glUseProgram(Base::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Base::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Base::props.objProgram, "lightColor");
+	lightColorLoc2 = glGetUniformLocation(Base::props.objProgram, "moonColor");
+	lightPosLoc2 = glGetUniformLocation(Base::props.objProgram, "moonPos");
+	lightPosLoc = glGetUniformLocation(Base::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Base::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc2, moonPosition.x, moonPosition.y, moonPosition.z);
+	glUniform3f(lightColorLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+
+	glBindVertexArray(Cabina::props.objVao);
+	glUseProgram(Cabina::props.objProgram);
+	objectColorLoc = glGetUniformLocation(Cabina::props.objProgram, "objectColor");
+	lightColorLoc = glGetUniformLocation(Cabina::props.objProgram, "lightColor");
+	lightColorLoc2 = glGetUniformLocation(Cabina::props.objProgram, "moonColor");
+	lightPosLoc2 = glGetUniformLocation(Cabina::props.objProgram, "moonPos");
+	lightPosLoc = glGetUniformLocation(Cabina::props.objProgram, "lightPos");
+	viewPosLoc = glGetUniformLocation(Cabina::props.objProgram, "viewPos");
+	glUniform3f(objectColorLoc, 1.f, 1.f, 1.f);
+	glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
+	glUniform3f(lightPosLoc2, moonPosition.x, moonPosition.y, moonPosition.z);
+	glUniform3f(lightColorLoc2, lightColor2.x, lightColor2.y, lightColor2.z);
+	glUniform3f(lightPosLoc, pendulumPos.x, pendulumPos.y, pendulumPos.z);
+	cameraPos = RV::_cameraPoint;
+	glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+	glBindVertexArray(0);
+
 	//draw
 	Cube::drawCube();
+	Cube2::drawCube();
 	Object::drawObject(Noria::props);
 	Object::drawObject(Base::props);
 	Object::drawObject(Trump::props);
 	Object::drawObject(Chicken::props);
-	//Object::drawObject(Chicken::props);
 }
 
 void RenderEx3(float dt)
