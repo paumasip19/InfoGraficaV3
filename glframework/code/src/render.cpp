@@ -587,6 +587,27 @@ struct ObjectProps
 	std::vector< glm::vec2 > uvs;
 };
 
+struct Program {
+
+	GLuint objProgram;
+	GLuint objShaders[3];
+
+	Program(GLchar * vsPath, GLchar * fsPath) {
+		objShaders[0] = compileAndLoadShader(vsPath, GL_VERTEX_SHADER);
+		objShaders[1] = compileAndLoadShader(fsPath, GL_FRAGMENT_SHADER);
+		//cubeShaders[2] = compileAndLoadShader("shaders/geometry.gs", GL_GEOMETRY_SHADER, "cubeGeo");
+
+		objProgram = glCreateProgram();
+		glAttachShader(objProgram, objShaders[0]);
+		glAttachShader(objProgram, objShaders[1]);
+		//glAttachShader(cubeProgram, cubeShaders[2]);
+		glBindAttribLocation(objProgram, 0, "in_Position");
+		glBindAttribLocation(objProgram, 1, "in_Normal");
+		linkProgram(objProgram);
+	}
+
+};
+
 namespace Object {
 
 	void setupObject(ObjectProps &props, GLchar * modelPath, GLchar * vsPath, GLchar * fsPath) {
@@ -649,8 +670,8 @@ namespace Object {
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
-		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
 
+		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
 		glUseProgram(0);
 		glBindVertexArray(0);
 		//glDisable(GL_PRIMITIVE_RESTART);
@@ -767,8 +788,12 @@ void Ex1Cleanup() {
 
 void Ex2Cleanup() {
 	Cube::cleanupCube();
+	Cube2::cleanupCube();
 	Object::cleanupObject(Trump::props);
 	Object::cleanupObject(Chicken::props);
+	Object::cleanupObject(Base::props);
+	Object::cleanupObject(Cabina::props);
+	Object::cleanupObject(Noria::props);
 }
 
 void Ex3Cleanup() {

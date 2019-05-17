@@ -10,31 +10,45 @@ uniform vec3 cameraPoint;
 uniform vec3 objectColor;
 uniform vec3 lightColor;
 
+uniform vec3 moonPos;
+uniform vec3 moonColor;
 
-void main() 
-{	
+vec3 Light(vec3 _lightPosition, vec3 _lightColor, float dLength = 1000)
+{
 	//ambient
 	float ambientStrength = 0.5f;
-	vec3 ambient = ambientStrength * lightColor;
+	vec3 ambient = ambientStrength * _lightColor;
 
 	//diffuse
 	vec3 norm = normalize(vert_Normal);
-	vec3 lightDir = normalize(lightPos - FragPos);
-	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 lightDir = _lightPosition - FragPos;
+	float lightLength = length(lightDir);
+	vec3 lightDirNorm = normalize(lightDir);
+	
+	float distForce = 1;
+	if(lightLength > dLength)distForce = 0;
+	
+	float diff = max(dot(norm, lightDirNorm), 0.0);
 	if(diff < 0.2) diff = 0;
 	if(diff >= 0.2 && diff < 0.4) diff = 0.2;
 	if(diff >= 0.4 && diff < 0.5) diff = 0.4;
 	if(diff >= 0.5) diff = 1;
-	vec3 diffuse = diff * lightColor;
+	vec3 diffuse = diff * _lightColor;
 
 	//specular
 	float specularStrength = 1.0f;
 	vec3 viewDir = normalize(cameraPoint - FragPos);
-	vec3 reflectDir = reflect(-lightDir, norm);
+	vec3 reflectDir = reflect(-lightDirNorm, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	vec3 specular = specularStrength * spec * lightColor;
+	vec3 specular = specularStrength * spec * _lightColor;
 
-	vec3 result = (ambient + diffuse + specular) * objectColor;
+	return (ambient + diffuse + specular) * objectColor * distForce;
+}
+
+void main() 
+{
+
+	vec3 result = Light(lightPos, lightColor, 1) + Light(moonPos, moonColor);
 
 	out_Color = vec4(result, 1.0f);
 }
