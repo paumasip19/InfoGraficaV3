@@ -9,6 +9,8 @@ uniform vec3 lightPos;
 uniform vec3 cameraPoint;
 uniform vec3 objectColor;
 uniform vec3 lightColor;
+uniform int use_sten;
+uniform vec4 color;
 
 uniform vec3 moonPos;
 uniform vec3 moonColor;
@@ -47,8 +49,11 @@ vec3 Light(vec3 _lightPosition, vec3 _lightColor, float dLength = 1000)
 
 void main() 
 {
-
 	vec3 result = Light(lightPos, lightColor, 1) + Light(moonPos, moonColor);
+	if (use_sten == 1) {
+		out_Color = color;
+		return;
+	}
 
 	out_Color = vec4(result, 1.0f);
 }

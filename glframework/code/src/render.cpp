@@ -663,6 +663,9 @@ namespace Object {
 		props.objMat = transform;
 	}
 	void drawObject(ObjectProps &props) {
+
+		glEnable(GL_STENCIL_TEST);
+		glActiveTexture(GL_TEXTURE0);
 		//glEnable(GL_PRIMITIVE_RESTART); //para draw elements asi el buffer diferencia un objeto del otro
 		glBindVertexArray(props.objVao);
 		glUseProgram(props.objProgram);
@@ -670,11 +673,28 @@ namespace Object {
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+		glUniform1i(glGetUniformLocation(props.objProgram, "use_sten"), 0);
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilMask(0xFF);
+		glClear(GL_STENCIL_BUFFER_BIT);
 
 		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
+
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00);
+		glDepthMask(GL_FALSE);
+
+		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.8f, 0.1f, 0.1f, 1.f);
+		glUniform1i(glGetUniformLocation(props.objProgram, "use_sten"), 1);
+
+		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
+		glDepthMask(GL_TRUE);
+
 		glUseProgram(0);
 		glBindVertexArray(0);
 		//glDisable(GL_PRIMITIVE_RESTART);
+		glDisable(GL_STENCIL_TEST);
 	}
 };
 
