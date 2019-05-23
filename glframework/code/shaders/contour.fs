@@ -13,6 +13,8 @@ uniform vec3 lightColor;
 uniform vec3 moonPos;
 uniform vec3 moonColor;
 
+uniform int use_sten;
+
 vec3 Light(vec3 _lightPosition, vec3 _lightColor, float dLength = 1000)
 {
 	//ambient
@@ -48,6 +50,10 @@ vec3 Light(vec3 _lightPosition, vec3 _lightColor, float dLength = 1000)
 void main() 
 {
 
+	if(use_sten == 1){
+		out_Color = vec4(0.8f,0.1f,0.1f,1.f);
+		return;
+	}
 	vec3 result = Light(lightPos, lightColor, 1) + Light(moonPos, moonColor);
 
 	out_Color = vec4(result, 1.0f);

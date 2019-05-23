@@ -662,39 +662,50 @@ namespace Object {
 	void updateObject(const glm::mat4& transform, ObjectProps props) {
 		props.objMat = transform;
 	}
-	void drawObject(ObjectProps &props) {
+	void drawObject(ObjectProps &props, bool contour = false) {
+		if (contour) glEnable(GL_STENCIL_TEST);
 
-		glEnable(GL_STENCIL_TEST);
+		glm::mat4 tempMat = glm::mat4(1.f);
+
 		glActiveTexture(GL_TEXTURE0);
 		//glEnable(GL_PRIMITIVE_RESTART); //para draw elements asi el buffer diferencia un objeto del otro
 		glBindVertexArray(props.objVao);
 		glUseProgram(props.objProgram);
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(props.objMat));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "projMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_projection));
 		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
 		glUniform1i(glGetUniformLocation(props.objProgram, "use_sten"), 0);
+
+		if (contour) {
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glStencilMask(0xFF);
+		//glDepthMask(GL_FALSE);
 		glClear(GL_STENCIL_BUFFER_BIT);
 
 		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
 
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00);
-		glDepthMask(GL_FALSE);
-
-		glUniform4f(glGetUniformLocation(props.objProgram, "color"), 0.8f, 0.1f, 0.1f, 1.f);
+		//glDepthMask(GL_TRUE);
+		tempMat = props.objMat;
+		props.objMat = glm::scale(props.objMat, glm::vec3(1.05f, 1.05f, 1.05f));
+		glUniformMatrix4fv(glGetUniformLocation(props.objProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(props.objMat));
 		glUniform1i(glGetUniformLocation(props.objProgram, "use_sten"), 1);
+		}	
 
 		glDrawArrays(GL_TRIANGLES, 0, props.vertices.size());
-		glDepthMask(GL_TRUE);
+		if (contour) {
+			glDisable(GL_STENCIL_TEST);
+			props.objMat = tempMat;
+		}
 
 		glUseProgram(0);
 		glBindVertexArray(0);
 		//glDisable(GL_PRIMITIVE_RESTART);
-		glDisable(GL_STENCIL_TEST);
+
 	}
 };
 
@@ -759,8 +770,8 @@ void initEx2() {
 	Object::setupObject(Cabina::props, Cabina::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
 	Object::setupObject(Noria::props, Noria::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
 	Object::setupObject(Base::props, Base::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
-	Object::setupObject(Trump::props, Trump::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
-	Object::setupObject(Chicken::props, Chicken::modelPath, "shaders/ex2.vs", "shaders/ex2.fs");
+	Object::setupObject(Trump::props, Trump::modelPath, "shaders/contour.vs", "shaders/contour.fs");
+	Object::setupObject(Chicken::props, Chicken::modelPath, "shaders/contour.vs", "shaders/contour.fs");
 
 	Base::props.objMat = glm::translate(glm::mat4(1.f), { 0,-8,0 });
 }
@@ -1044,8 +1055,8 @@ void RenderEx2(float dt)
 	Cube2::drawCube();
 	Object::drawObject(Noria::props);
 	Object::drawObject(Base::props);
-	Object::drawObject(Trump::props);
-	Object::drawObject(Chicken::props);
+	Object::drawObject(Trump::props, true);
+	Object::drawObject(Chicken::props, true);
 }
 
 void RenderEx3(float dt)
